@@ -28,6 +28,13 @@ public class FareCalculatorServiceTest {
         ticket = new Ticket();
     }
 
+    // Applying free time to all prices used for tests
+    private double expectedPrice(double hours, double fare) {
+        double billableHours = hours - Fare.FREE_FIRST_HOURS;
+        if (billableHours < 0) billableHours = 0;
+        return billableHours * fare;
+    }
+
     @Test
     public void calculateFareCar(){
         Date inTime = new Date();
@@ -39,7 +46,7 @@ public class FareCalculatorServiceTest {
         ticket.setOutTime(outTime);
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
-        assertEquals(ticket.getPrice(), Fare.CAR_RATE_PER_HOUR);
+        assertEquals(ticket.getPrice(), expectedPrice(1,Fare.CAR_RATE_PER_HOUR));
     }
 
     @Test
@@ -53,7 +60,7 @@ public class FareCalculatorServiceTest {
         ticket.setOutTime(outTime);
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
-        assertEquals(ticket.getPrice(), Fare.BIKE_RATE_PER_HOUR);
+        assertEquals(ticket.getPrice(), expectedPrice(1,Fare.BIKE_RATE_PER_HOUR));
     }
 
     @Test
@@ -93,7 +100,7 @@ public class FareCalculatorServiceTest {
         ticket.setOutTime(outTime);
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
-        assertEquals((0.75 * Fare.BIKE_RATE_PER_HOUR), ticket.getPrice() );
+        assertEquals(expectedPrice(0.75, Fare.BIKE_RATE_PER_HOUR), ticket.getPrice() );
     }
 
     @Test
@@ -107,7 +114,7 @@ public class FareCalculatorServiceTest {
         ticket.setOutTime(outTime);
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
-        assertEquals( (0.75 * Fare.CAR_RATE_PER_HOUR) , ticket.getPrice());
+        assertEquals( expectedPrice(0.75,Fare.CAR_RATE_PER_HOUR) , ticket.getPrice());
     }
 
     @Test
@@ -121,7 +128,22 @@ public class FareCalculatorServiceTest {
         ticket.setOutTime(outTime);
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
-        assertEquals( (24 * Fare.CAR_RATE_PER_HOUR) , ticket.getPrice());
+        assertEquals( expectedPrice(24, Fare.CAR_RATE_PER_HOUR) , ticket.getPrice());
+    }
+
+    @Test
+    public void calculateFareCarWithLessThanFreeTime_expectedZero() {
+        long freeTimeInMillis = (long) (Fare.FREE_FIRST_HOURS * 60 * 60 * 1000);
+        Date inTime = new Date();
+        inTime.setTime( System.currentTimeMillis() - freeTimeInMillis );
+        Date outTime = new Date();
+        ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
+
+        ticket.setInTime(inTime);
+        ticket.setOutTime(outTime);
+        ticket.setParkingSpot(parkingSpot);
+        fareCalculatorService.calculateFare(ticket);
+        assertEquals( 0, ticket.getPrice());
     }
 
 }
