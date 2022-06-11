@@ -24,12 +24,11 @@ public class TicketDAO {
         try {
             con = dataBaseConfig.getConnection();
             PreparedStatement ps = con.prepareStatement(DBConstants.SAVE_TICKET);
-            //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
-            //ps.setInt(1,ticket.getId());
+            //PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME
             ps.setInt(1,ticket.getParkingSpot().getId());
             ps.setString(2, ticket.getVehicleRegNumber());
             ps.setDouble(3, ticket.getPrice());
-            ps.setTimestamp(4, new Timestamp(ticket.getInTime().getTime()));
+            ps.setTimestamp(4, (ticket.getInTime() == null)?null: (new Timestamp(ticket.getInTime().getTime())));
             ps.setTimestamp(5, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())) );
             return ps.execute();
         }catch (Exception ex){
@@ -46,7 +45,7 @@ public class TicketDAO {
         try {
             con = dataBaseConfig.getConnection();
             PreparedStatement ps = con.prepareStatement(DBConstants.GET_TICKET);
-            //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME)
+            //ID, PARKING_NUMBER, VEHICLE_REG_NUMBER, PRICE, IN_TIME, OUT_TIME
             ps.setString(1,vehicleRegNumber);
             ResultSet rs = ps.executeQuery();
             if(rs.next()){
@@ -74,9 +73,11 @@ public class TicketDAO {
         try {
             con = dataBaseConfig.getConnection();
             PreparedStatement ps = con.prepareStatement(DBConstants.UPDATE_TICKET);
+            //PRICE, IN_TIME, OUT_TIME, ID
             ps.setDouble(1, ticket.getPrice());
-            ps.setTimestamp(2, new Timestamp(ticket.getOutTime().getTime()));
-            ps.setInt(3,ticket.getId());
+            ps.setTimestamp(2, (ticket.getInTime() == null)?null: (new Timestamp(ticket.getInTime().getTime())));
+            ps.setTimestamp(3, (ticket.getOutTime() == null)?null: (new Timestamp(ticket.getOutTime().getTime())));
+            ps.setInt(4,ticket.getId());
             ps.execute();
             return true;
         }catch (Exception ex){

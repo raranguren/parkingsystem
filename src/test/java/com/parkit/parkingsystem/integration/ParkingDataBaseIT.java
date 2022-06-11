@@ -74,7 +74,7 @@ public class ParkingDataBaseIT {
     @Test
     public void testParkingLotExit(){
         // ARRANGE
-        Date fiveHoursBefore = new Date((new Date()).getTime() - 360_000 * 5);
+        Date fiveHoursBefore = new Date(System.currentTimeMillis() - 5 * 60 * 60 * 1000);
         parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         parkingService.processIncomingVehicle();
         Ticket ticket = ticketDAO.getTicket("ABCDEF");

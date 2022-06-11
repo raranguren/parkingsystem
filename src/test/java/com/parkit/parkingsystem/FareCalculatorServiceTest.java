@@ -132,10 +132,10 @@ public class FareCalculatorServiceTest {
     }
 
     @Test
-    public void calculateFareCarWithLessThanFreeTime_expectedZero() {
+    public void calculateFareCarWithLessThanFreeTime_ExpectedZero() {
         long freeTimeInMillis = (long) (Fare.FREE_FIRST_HOURS * 60 * 60 * 1000);
         Date inTime = new Date();
-        inTime.setTime( System.currentTimeMillis() - freeTimeInMillis );
+        inTime.setTime( System.currentTimeMillis() - freeTimeInMillis);
         Date outTime = new Date();
         ParkingSpot parkingSpot = new ParkingSpot(1, ParkingType.CAR, false);
 
@@ -144,6 +144,11 @@ public class FareCalculatorServiceTest {
         ticket.setParkingSpot(parkingSpot);
         fareCalculatorService.calculateFare(ticket);
         assertEquals( 0, ticket.getPrice());
+    }
+
+    @Test
+    public void calculateFareCarSecondVisit_ExpectedDiscountForRecurrentUser() {
+        // TODO 5% discount for recurring users. Needs a mock for DAO
     }
 
 }
