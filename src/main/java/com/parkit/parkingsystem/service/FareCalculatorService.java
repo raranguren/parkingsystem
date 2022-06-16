@@ -43,19 +43,4 @@ public class FareCalculatorService {
         ticket.setPrice(billableHours * fare);
     }
 
-    public void calculateFare(Ticket ticket, TicketDAO ticketDAO) {
-        // First, calculate fare without discount for being recurrent user
-        calculateFare(ticket);
-        // Then, find out if there was a previous entry for the same registration number
-        String regNumber = ticket.getVehicleRegNumber();
-        if (regNumber != null && !regNumber.isEmpty()) {
-            Ticket previousTicket = ticketDAO.getTicket(regNumber);
-            if (previousTicket.getVehicleRegNumber().equals(regNumber)) {
-                // If not the first time, then apply discount for recurrent users
-                double price = ticket.getPrice();
-                price *= 1-Fare.RATE_PERCENT_DISCOUNT_FOR_RECURRING_USERS;
-                ticket.setPrice(price);
-            }
-        }
-    }
 }

@@ -20,14 +20,10 @@ import static org.mockito.Mockito.when;
 
 import java.util.Date;
 
-@ExtendWith(MockitoExtension.class)
 public class FareCalculatorServiceTest {
 
     private static FareCalculatorService fareCalculatorService;
     private Ticket ticket;
-
-    @Mock
-    private static TicketDAO ticketDAO;
 
     @BeforeAll
     private static void setUp() {
@@ -116,33 +112,17 @@ public class FareCalculatorServiceTest {
     }
 
     @Test
-    public void calculateFareCarWithLessThanFreeTime_ExpectedZero() {
+    public void calculateFareCarWithLessThanFreeTime() {
         arrangeTestTicket(removeHoursFromCurrentTime(Fare.FREE_FIRST_HOURS), ParkingType.CAR);
         fareCalculatorService.calculateFare(ticket);
         assertEquals( 0, ticket.getPrice());
     }
 
     @Test
-    public void calculateFareBikeWithLessThanFreeTime_ExpectedZero() {
+    public void calculateFareBikeWithLessThanFreeTime() {
         arrangeTestTicket(removeHoursFromCurrentTime(Fare.FREE_FIRST_HOURS), ParkingType.BIKE);
         fareCalculatorService.calculateFare(ticket);
         assertEquals( 0, ticket.getPrice());
-    }
-
-    @Test
-    public void calculateFareCarSecondVisit_ExpectedDiscountForRecurrentUser() {
-        // ARRANGE
-        arrangeTestTicket(removeHoursFromCurrentTime(4), ParkingType.CAR);
-        Ticket previousTicket = new Ticket();
-        previousTicket.setVehicleRegNumber("ABCDEF");
-        ticket.setVehicleRegNumber(previousTicket.getVehicleRegNumber());
-        when(ticketDAO.getTicket(anyString())).thenReturn(previousTicket);
-        // ACT
-        fareCalculatorService.calculateFare(ticket, ticketDAO);
-        // ASSERT
-        assertEquals(
-                predictCorrectPrice(4,Fare.CAR_RATE_PER_HOUR,Fare.RATE_PERCENT_DISCOUNT_FOR_RECURRING_USERS),
-                ticket.getPrice());
     }
 
 }
