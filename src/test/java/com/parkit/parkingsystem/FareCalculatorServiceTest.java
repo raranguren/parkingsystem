@@ -2,21 +2,32 @@ package com.parkit.parkingsystem;
 
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.constants.ParkingType;
+import com.parkit.parkingsystem.dao.ParkingSpotDAO;
+import com.parkit.parkingsystem.dao.TicketDAO;
 import com.parkit.parkingsystem.model.ParkingSpot;
 import com.parkit.parkingsystem.model.Ticket;
 import com.parkit.parkingsystem.service.FareCalculatorService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 import java.util.Date;
 
+@ExtendWith(MockitoExtension.class)
 public class FareCalculatorServiceTest {
 
     private static FareCalculatorService fareCalculatorService;
     private Ticket ticket;
+
+    @Mock
+    private static TicketDAO ticketDAO;
 
     @BeforeAll
     private static void setUp() {
@@ -120,7 +131,18 @@ public class FareCalculatorServiceTest {
 
     @Test
     public void calculateFareCarSecondVisit_ExpectedDiscountForRecurrentUser() {
-        // TODO 5% discount for recurring users. Needs a mock for DAO
+        // ARRANGE
+        arrangeTestTicket(removeHoursFromCurrentTime(4), ParkingType.CAR);
+        Ticket previousTicket = new Ticket();
+        previousTicket.setVehicleRegNumber("ABCDEF");
+        ticket.setVehicleRegNumber(previousTicket.getVehicleRegNumber());
+        when(ticketDAO.getTicket(anyString())).thenReturn(previousTicket);
+        // ACT
+        fareCalculatorService.calculateFare(ticket, ticketDAO);
+        // ASSERT
+        assertEquals(
+                predictCorrectPrice(4,Fare.CAR_RATE_PER_HOUR,Fare.RATE_PERCENT_DISCOUNT_FOR_RECURRING_USERS),
+                ticket.getPrice());
     }
 
 }
