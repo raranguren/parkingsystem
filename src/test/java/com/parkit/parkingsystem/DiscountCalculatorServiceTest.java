@@ -16,8 +16,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,16 +34,17 @@ public class DiscountCalculatorServiceTest {
     @BeforeEach
     private void setUpPerTest() {
         ticket = new Ticket();
-        try {
-            Ticket previousTicket = new Ticket();
-            previousTicket.setVehicleRegNumber("ABCDEF");
-            when(ticketDAO.getTicket(anyString())).thenAnswer( invocationOnMock ->
-                    invocationOnMock.getArguments()[0] == "ABCDEF" ? previousTicket : null );
-            discountCalculatorService = new DiscountCalculatorService(ticketDAO);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw  new RuntimeException("Failed to set up test mock objects");
-        }
+        discountCalculatorService = new DiscountCalculatorService(ticketDAO);
+    }
+
+    private void ticketDaoMockShouldReturnTicketWithRegNumber(String regNumber) {
+        Ticket previousTicket = new Ticket();
+        previousTicket.setVehicleRegNumber(regNumber);
+        when(ticketDAO.getTicket(anyString())).thenReturn(previousTicket);
+    }
+
+    private void ticketDaoMockShouldReturnNull() {
+        when(ticketDAO.getTicket(anyString())).thenReturn(null);
     }
 
     @Test
@@ -49,6 +52,7 @@ public class DiscountCalculatorServiceTest {
         // ARRANGE
         ticket.setVehicleRegNumber("ABCDEF");
         ticket.setPrice(100);
+        ticketDaoMockShouldReturnTicketWithRegNumber("ABCDEF");
         // ACT
         discountCalculatorService.calculateDiscount(ticket);
         // ASSERT
@@ -62,9 +66,33 @@ public class DiscountCalculatorServiceTest {
         // ARRANGE
         ticket.setVehicleRegNumber("SOMETHINGELSE");
         ticket.setPrice(100);
+        ticketDaoMockShouldReturnNull();
+        // ACT
+        discountCalculatorService.calculateDiscount(ticket);
+        // ASSERT
+        assertEquals(100, ticket.getPrice()); // no discount on first visit
+    }
+
+    @Test
+    public void calculateDiscountWhenRegNumberIsNotDefined() {
+        // ARRANGE
+        ticket.setPrice(100);
         // ACT
         discountCalculatorService.calculateDiscount(ticket);
         // ASSERT
         assertEquals(100, ticket.getPrice());
     }
+
+    @Test
+    public void calculateDiscountWhenPriceIsZero() {
+        // ARRANGE
+        ticket.setVehicleRegNumber("ABCDEF");
+        ticket.setPrice(0);
+        ticketDaoMockShouldReturnTicketWithRegNumber("ABCDEF");
+        // ACT
+        discountCalculatorService.calculateDiscount(ticket);
+        // ASSERT
+        assertEquals(0, ticket.getPrice());
+    }
+
 }

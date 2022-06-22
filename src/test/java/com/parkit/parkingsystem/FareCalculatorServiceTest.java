@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static java.lang.Math.round;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -48,9 +49,6 @@ public class FareCalculatorServiceTest {
         double billableHours = hours - Fare.FREE_FIRST_HOURS;
         if (billableHours < 0) billableHours = 0;
         return billableHours * pricePerHour;
-    }
-    private double predictCorrectPrice(double hours, double pricePerHour, double discountPercent) {
-        return predictCorrectPrice(hours, pricePerHour) * (1 - discountPercent);
     }
     
     // Not a test - Gives a time that happened before
