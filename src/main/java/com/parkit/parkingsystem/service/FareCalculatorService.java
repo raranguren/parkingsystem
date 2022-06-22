@@ -3,6 +3,8 @@ package com.parkit.parkingsystem.service;
 import com.parkit.parkingsystem.constants.Fare;
 import com.parkit.parkingsystem.model.Ticket;
 
+import static java.lang.Math.round;
+
 public class FareCalculatorService {
 
     public void calculateFare(Ticket ticket){
@@ -35,7 +37,9 @@ public class FareCalculatorService {
         }
 
         // Applying price to ticket
-        ticket.setPrice(billableHours * fare);
+        double price = billableHours * fare;
+        price = round(price * 100) / 100.0; // rounding to 2 decimals
+        ticket.setPrice(price);
     }
 
 }

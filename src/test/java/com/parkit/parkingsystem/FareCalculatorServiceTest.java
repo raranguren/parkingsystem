@@ -48,7 +48,9 @@ public class FareCalculatorServiceTest {
     private double predictCorrectPrice(double hours, double pricePerHour) {
         double billableHours = hours - Fare.FREE_FIRST_HOURS;
         if (billableHours < 0) billableHours = 0;
-        return billableHours * pricePerHour;
+        double price =  billableHours * pricePerHour;
+        // Prices rounded to 2 decimals
+        return round(price * 100.0) / 100.0;
     }
     
     // Not a test - Gives a time that happened before
