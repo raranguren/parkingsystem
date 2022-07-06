@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.Math.round;
 import static org.mockito.Mockito.when;
@@ -47,8 +48,6 @@ public class ParkingDataBaseIT {
 
     @BeforeEach
     private void setUpPerTest() throws Exception {
-        when(inputReaderUtil.readSelection()).thenReturn(1); // always select 1 : CAR
-        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
         dataBasePrepareService.clearDataBaseEntries();
     }
 
@@ -58,8 +57,10 @@ public class ParkingDataBaseIT {
     }
 
     @Test
-    public void testParkingACar(){
+    public void testParkingACar() throws Exception {
         // ARRANGE
+        when(inputReaderUtil.readSelection()).thenReturn(1); // select 1 : CAR
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
         parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         int slotNumberAvailableBefore = parkingSpotDAO.getNextAvailableSlot(ParkingType.CAR);
         // ACT
@@ -75,12 +76,33 @@ public class ParkingDataBaseIT {
     }
 
     @Test
-    public void testParkingLotExit(){
+    public void testParkingABike() throws Exception {
         // ARRANGE
-        Date fiveHoursBefore = new Date(System.currentTimeMillis() - 5 * 60 * 60 * 1000);
+        when(inputReaderUtil.readSelection()).thenReturn(2); // select 2 : BIKE
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
+        parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+        int slotNumberAvailableBefore = parkingSpotDAO.getNextAvailableSlot(ParkingType.BIKE);
+        // ACT
+        parkingService.processIncomingVehicle();
+        Ticket ticket = ticketDAO.getTicket("ABCDEF");
+        ParkingSpot parkingSpot = ticket.getParkingSpot();
+        int SlotNumberAvailableAfter = parkingSpotDAO.getNextAvailableSlot(ParkingType.BIKE);
+        // ASSERT
+        assertNotNull(ticket.getInTime());
+        assertNull(ticket.getOutTime());
+        assertEquals(parkingSpot.getId(),slotNumberAvailableBefore);
+        assertNotEquals(SlotNumberAvailableAfter,slotNumberAvailableBefore);
+    }
+
+    @Test
+    public void testParkingLotExit() throws Exception {
+        // ARRANGE
+        when(inputReaderUtil.readSelection()).thenReturn(1); // select 1 : CAR
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
         parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         parkingService.processIncomingVehicle();
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
+        Date fiveHoursBefore = new Date(System.currentTimeMillis() - 5 * 60 * 60 * 1000);
         ticket.setInTime(fiveHoursBefore);
         ticketDAO.updateTicket(ticket);
         // ACT
@@ -92,8 +114,10 @@ public class ParkingDataBaseIT {
     }
 
     @Test
-    public void testPriceFirstTime() {
+    public void testPriceFirstTimeWithCar() throws Exception {
         // ARRANGE
+        when(inputReaderUtil.readSelection()).thenReturn(1); // select 1 : CAR
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
         parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
         parkingService.processIncomingVehicle();
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
@@ -111,10 +135,11 @@ public class ParkingDataBaseIT {
     }
 
     @Test
-    public void testPriceSecondTime() {
+    public void testPriceSecondTimeWithCar() throws Exception {
         // ARRANGE
+        when(inputReaderUtil.readSelection()).thenReturn(1); // select 1 : CAR
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
         parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
-
         parkingService.processIncomingVehicle();
         parkingService.processExitingVehicle();
         Ticket previousTicket = ticketDAO.getTicket("ABCDEF");
@@ -122,7 +147,6 @@ public class ParkingDataBaseIT {
         previousTicket.setInTime(previousDay);
         previousTicket.setOutTime(previousDay);
         ticketDAO.updateTicket(previousTicket);
-
         parkingService.processIncomingVehicle();
         Ticket ticket = ticketDAO.getTicket("ABCDEF");
         long freeTimeInMillis = (long)(Fare.FREE_FIRST_HOURS * 60 * 60 * 1000);
@@ -139,5 +163,75 @@ public class ParkingDataBaseIT {
         assertEquals(expectedPriceRounded, ticket.getPrice());
     }
 
+    @Test
+    public void testPriceFirstTimeWithBike() throws Exception {
+        // ARRANGE
+        when(inputReaderUtil.readSelection()).thenReturn(2); // select 2 : BIKE
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
+        parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+        parkingService.processIncomingVehicle();
+        Ticket ticket = ticketDAO.getTicket("ABCDEF");
 
+        long freeTimeInMillis = (long)(Fare.FREE_FIRST_HOURS * 60 * 60 * 1000);
+        long paidTimeInMillis = 60 * 60 * 1000; // to be billed for 1 hour
+        ticket.setInTime(new Date(System.currentTimeMillis() - paidTimeInMillis - freeTimeInMillis));
+        ticketDAO.updateTicket(ticket);
+
+        // ACT
+        parkingService.processExitingVehicle();
+        ticket = ticketDAO.getTicket("ABCDEF");
+        // ASSERT
+        assertEquals(Fare.BIKE_RATE_PER_HOUR, ticket.getPrice());
+    }
+
+    @Test
+    public void testPriceSecondTimeWithBike() throws Exception {
+        // ARRANGE
+        when(inputReaderUtil.readSelection()).thenReturn(2); // select 2 : BIKE
+        when(inputReaderUtil.readVehicleRegistrationNumber()).thenReturn("ABCDEF");
+        parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+        parkingService.processIncomingVehicle();
+        parkingService.processExitingVehicle();
+        Ticket previousTicket = ticketDAO.getTicket("ABCDEF");
+        Date previousDay = new Date(System.currentTimeMillis() - 24 * 60 * 60 * 1000);
+        previousTicket.setInTime(previousDay);
+        previousTicket.setOutTime(previousDay);
+        ticketDAO.updateTicket(previousTicket);
+        parkingService.processIncomingVehicle();
+        Ticket ticket = ticketDAO.getTicket("ABCDEF");
+        long freeTimeInMillis = (long)(Fare.FREE_FIRST_HOURS * 60 * 60 * 1000);
+        long paidTimeInMillis = 60 * 60 * 1000; // to be billed for 1 hour
+        ticket.setInTime(new Date(System.currentTimeMillis() - paidTimeInMillis - freeTimeInMillis));
+        ticketDAO.updateTicket(ticket);
+
+        // ACT
+        parkingService.processExitingVehicle();
+        ticket = ticketDAO.getTicket("ABCDEF");
+        // ASSERT
+        double expectedPriceNotRounded = Fare.BIKE_RATE_PER_HOUR * (1 - Fare.RATE_PERCENT_DISCOUNT_FOR_RECURRING_USERS);
+        double expectedPriceRounded = round(expectedPriceNotRounded * 100.0) / 100.0;
+        assertEquals(expectedPriceRounded, ticket.getPrice());
+    }
+
+    @Test
+    public void testIncomingVehicleError() {
+        try {
+            parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+            parkingService.processIncomingVehicle();
+        } catch (Exception e) {
+            assertNotNull(e);
+        }
+    }
+
+    @Test
+    public void testExitVehicleError() {
+        try {
+            when(ticketDAO.getTicket("ABCDEF")).thenReturn(null);
+            parkingService = new ParkingService(inputReaderUtil, parkingSpotDAO, ticketDAO);
+            parkingService.processExitingVehicle();
+            testParkingACar();
+        } catch (Exception e){
+            assertNotNull(e);
+        }
+    }
 }
