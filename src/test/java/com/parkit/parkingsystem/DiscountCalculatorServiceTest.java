@@ -38,22 +38,12 @@ public class DiscountCalculatorServiceTest {
         discountCalculatorService = new DiscountCalculatorService(ticketDAO);
     }
 
-    private void ticketDaoMockShouldReturnTicketWithRegNumber(String regNumber) {
-        Ticket previousTicket = new Ticket();
-        previousTicket.setVehicleRegNumber(regNumber);
-        when(ticketDAO.getTicket(anyString())).thenReturn(previousTicket);
-    }
-
-    private void ticketDaoMockShouldReturnNull() {
-        when(ticketDAO.getTicket(anyString())).thenReturn(null);
-    }
-
     @Test
     public void calculateDiscountSecondVisit() {
         // ARRANGE
         ticket.setVehicleRegNumber("ABCDEF");
         ticket.setPrice(100);
-        ticketDaoMockShouldReturnTicketWithRegNumber("ABCDEF");
+        when(ticketDAO.countTicketsByRegNumber(anyString())).thenReturn(2);
         // ACT
         discountCalculatorService.calculateDiscount(ticket);
         // ASSERT
@@ -67,7 +57,7 @@ public class DiscountCalculatorServiceTest {
         // ARRANGE
         ticket.setVehicleRegNumber("SOMETHINGELSE");
         ticket.setPrice(100);
-        ticketDaoMockShouldReturnNull();
+        when(ticketDAO.countTicketsByRegNumber(anyString())).thenReturn(1);
         // ACT
         discountCalculatorService.calculateDiscount(ticket);
         // ASSERT
@@ -89,7 +79,7 @@ public class DiscountCalculatorServiceTest {
         // ARRANGE
         ticket.setVehicleRegNumber("ABCDEF");
         ticket.setPrice(0);
-        ticketDaoMockShouldReturnTicketWithRegNumber("ABCDEF");
+        when(ticketDAO.countTicketsByRegNumber(anyString())).thenReturn(2);
         // ACT
         discountCalculatorService.calculateDiscount(ticket);
         // ASSERT
@@ -101,7 +91,7 @@ public class DiscountCalculatorServiceTest {
         // ARRANGE
         ticket.setPrice(0.01);
         ticket.setVehicleRegNumber("ABCDEF");
-        ticketDaoMockShouldReturnTicketWithRegNumber("ABCDEF");
+        when(ticketDAO.countTicketsByRegNumber(anyString())).thenReturn(2);
         // ACT
         discountCalculatorService.calculateDiscount(ticket);
         // ASSERT

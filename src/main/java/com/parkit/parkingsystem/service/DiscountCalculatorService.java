@@ -17,8 +17,8 @@ public class DiscountCalculatorService {
     public void calculateDiscount(Ticket ticket) {
         String regNumber = ticket.getVehicleRegNumber();
         if (regNumber != null && !regNumber.isEmpty()) {
-            Ticket previousTicket = ticketDAO.getTicket(regNumber);
-            if (previousTicket != null && previousTicket.getVehicleRegNumber().equals(regNumber)) {
+            int timesParkedWithSameRegNumber = ticketDAO.countTicketsByRegNumber(regNumber);
+            if (timesParkedWithSameRegNumber > 1) {
                 double price = ticket.getPrice();
                 price *= 1- Fare.RATE_PERCENT_DISCOUNT_FOR_RECURRING_USERS;
                 price = round(price * 100) / 100.0; // rounding to 2 decimals
